@@ -1,6 +1,7 @@
 import processing.core.PApplet;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 public class Main extends PApplet {
 	int scale = 20;
@@ -9,10 +10,13 @@ public class Main extends PApplet {
 	int cols, rows;
 	float[][] terrain;
 	Color[][] colors;
-	float flaying = 0;
+	float flayingY = 0;
+	float flayingX = 0;
+	int KEYCODE = 0;
 	
 	public void settings() {
 		size(1200, 720, P3D);
+		
 		cols = w/scale;
 		rows = h/scale;
 		
@@ -21,9 +25,9 @@ public class Main extends PApplet {
 	}
 	
 	public void draw() {
-		float yOf = flaying;
+		float yOf = flayingY;
 		for (int y=0; y < rows; y ++) {
-			float  xOf = 0;
+			float  xOf = flayingX;
 			for (int x=0; x < cols; x ++) {
 				terrain[x][y] = map(noise(xOf, yOf), 0, 1, -200, 200);
 				xOf += 0.09;
@@ -54,11 +58,37 @@ public class Main extends PApplet {
 			}
 			endShape();
 		}
-		flaying -= 0.01;
+		
+		switch (KEYCODE) {
+			case 1 -> flayingY -= 0.01;
+			case 2 -> flayingY += 0.01;
+			case 3 -> flayingX -= 0.01;
+			case 4 -> flayingX += 0.01;
+		}
 	}
 	
 	public static void main (String[] args) {
 		String[] appletArgs = new String[] {"Main"};
 		PApplet.main(appletArgs);
+	}
+	
+	public void keyReleased() {
+		KEYCODE = 0;
+	}
+	
+	@Override
+	public void keyPressed (processing.event.KeyEvent event) {
+		if (event.getKeyCode() == KeyEvent.VK_UP) {
+			KEYCODE = 1;
+		}
+		if (event.getKeyCode() == KeyEvent.VK_DOWN) {
+			KEYCODE = 2;
+		}
+		if (event.getKeyCode() == KeyEvent.VK_LEFT) {
+			KEYCODE = 3;
+		}
+		if (event.getKeyCode() == KeyEvent.VK_RIGHT) {
+			KEYCODE = 4;
+		}
 	}
 }
