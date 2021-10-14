@@ -1,10 +1,9 @@
 import processing.core.PApplet;
 
 public class Main extends PApplet {
-	private int[][] grid;
-	int cols;
-	int rows;
-	int res = 20;
+	public final int res = 20;
+	public int cols, rows;
+	public Cell[][] grid;
 	
 	@Override
 	public void settings () {
@@ -12,65 +11,66 @@ public class Main extends PApplet {
 		cols = width/res;
 		rows = height/res;
 		
-		grid = new int[cols][rows];
+		grid = new Cell[cols][rows];
+		
 		for (int i=0; i < cols; i ++) {
 			for (int j=0; j < rows; j ++) {
-				grid[i][j] = floor(random(2));
+				if (random(100) < 50) {
+					grid[i][j] = new Cell(i, j, res, true);
+				} else {
+					grid[i][j] = new Cell(i, j, res, false);
+				}
 			}
 		}
 	}
 	
-	public int countNeighbors (int[][] grid, int x, int y) {
-		int neighbors = 0;
-		for (int i=-1; i < 2; i ++) {
-			for (int j=-1; j < 2; j ++) {
-				neighbors = grid[x+i][y+j];
+	public int aliveNeighborsCount (int x, int y) {
+		int aNC = 0;
+		for (int i=-1; i <= 1; i ++) {
+			for (int j =-1; j <= 1; j ++) {
+				if ((x+i) >= 0 && (x+i) < cols && (y+j) >= 0 && (y+j) < rows && (x+i) != x && (y+j) != y) {
+					if (grid[(x+i)][(y+j)].live)
+						aNC ++;
+				}
 			}
 		}
-		return neighbors;
+		return aNC;
+	}
+	
+	public Cell[][] oneYearPassed(Cell[][] grid) {
+		Cell[][] nextStage = new Cell[cols][rows];
+		
+		for (int i=0; i < cols; i ++) {
+			for (int j=0; j < rows; j ++) {
+				int aNC = aliveNeighborsCount(i, j);
+				if ((grid[i][j].live && aNC < 2) || (grid[i][j].live && aNC > 3)) {
+					nextStage[i][j] = new Cell(i, j, res, false);
+				} else if ((grid[i][j].live && aNC == 3) || (grid[i][j].live && aNC == 2)) {
+					nextStage[i][j] = new Cell(i, j, res, true);
+				} else if (!grid[i][j].live && aNC == 3) {
+					nextStage[i][j] = new Cell(i, j, res, true);
+				} else {
+					nextStage[i][j] = new Cell(i, j, res, grid[i][j].live);
+				}
+			}
+		}
+		
+		return nextStage;
 	}
 	
 	@Override
 	public void draw () {
-		background(0);
-		stroke(100);
+		background(56);
 		
-		for (int i=0; i < cols; i ++) {
-			for (int j=0; j < rows; j ++) {
-				int x = i * res;
-				int y = j * res;
-				if (grid[i][j] == 1) {
-					fill(255);
-				} else {
-					fill(0);
-				}
-				
-				rect(x, y, res, res);
+		frameRate(5);
+		
+		for (Cell[] cells : grid) {
+			for (Cell cell : cells) {
+				cell.draw(this);
 			}
 		}
 		
-		int[][] next = new int[cols][rows];
-		
-		for (int i=0; i < cols; i ++) {
-			for (int j=0; j < rows; j ++) {
-				if (i == 0 || i == cols - 1 || j == 0 || j == rows - 1) {
-					next[i][j] = grid[i][j];
-				} else {
-					int neighbors = countNeighbors(grid, i, j);
-					int state = grid[i][j];
-					neighbors -= state;
-					if (state == 0 && neighbors == 3) {
-						next[i][j] = 1;
-					} else if (state == 1 && (neighbors < 2 || neighbors > 3)) {
-						next[i][j] = 0;
-					} else {
-						next[i][j] = state;
-					}
-				}
-			}
-		}
-		
-		grid = next;
+		grid = oneYearPassed(grid);
 	}
 	
 	public static void main (String[] args) {
